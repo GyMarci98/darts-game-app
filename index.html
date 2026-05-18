@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Darts Checkout Grinder</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><circle cx='20' cy='20' r='18' fill='%231E293B' stroke='%2394A3B8' stroke-width='2'/><path d='M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2' stroke='rgba(255,255,255,0.1)' stroke-width='1.5'/><circle cx='20' cy='20' r='11' fill='none' stroke='%23F87171' stroke-width='2'/><circle cx='20' cy='20' r='3.5' fill='%234ADE80'/><path d='M34,6 L18.5,21.5' stroke='%23F1F5F9' stroke-width='2' stroke-linecap='round'/><path d='M36,4 L31,1 L28,6 L33,9 Z' fill='%2338BDF8'/><path d='M36,4 L39,9 L34,12 L31,7 Z' fill='%23FB923C'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0F172A;
+            --card-bg: #1E293B;
+            --accent-blue: #38BDF8;
+            --accent-red: #F87171;
+            --accent-green: #4ADE80;
+            --accent-orange: #FB923C;
+            --text-main: #F1F5F9;
+            --text-dim: #94A3B8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Urbanist', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .view {
+            display: none;
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            padding: 20px;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .view.active { display: flex; }
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+        .menu-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .home-profile-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+        }
+        .home-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-orange));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            position: relative;
+        }
+        .level-badge {
+            position: absolute;
+            bottom: -3px;
+            right: -3px;
+            background: var(--accent-orange);
+            color: #000;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            border: 2px solid var(--card-bg);
+        }
+        .home-user-info h2 { margin: 0 0 2px 0; font-size: 16px; color: #fff; }
+        .home-stats-row { display: flex; gap: 15px; margin-top: 0; font-size: 12px; font-weight: 600; color: var(--accent-orange); }
+        .home-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .home-card {
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.1s;
+            min-height: 120px;
+        }
+        .home-card:active { transform: scale(0.97); }
+        .home-card h3 { 
+            margin: 0; 
+            font-size: 18px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            line-height: 1.1; 
+            z-index: 2;
+        }
+        .home-card p { 
+            margin: 6px 0 0 0; 
+            font-size: 11px; 
+            font-weight: 600; 
+            opacity: 0.9; 
+            z-index: 2;
+        }
+        .home-card i.bg-icon {
+            position: absolute;
+            right: -10px;
+            bottom: -15px;
+            font-size: 70px;
+            opacity: 0.15;
+            z-index: 1;
+        }
+        .card-local { background: linear-gradient(135deg, #F87171, #EF4444); color: #fff; }
+        .card-online { background: linear-gradient(135deg, #FB923C, #F97316); color: #fff; }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100%;
+            background: var(--card-bg);
+            z-index: 1000;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+        }
+        .sidebar.open { left: 0; }
+        .nav-group { margin-bottom: 25px; }
+        .nav-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; display: block; }
+        .nav-btn {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 14px;
+            text-align: left;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center; gap: 12px; transition: all 0.2s;
+        }
+        .nav-btn:hover, .nav-btn.active { background: rgba(255, 255, 255, 0.1); border-color: var(--accent-blue); }
+        .nav-btn i { width: 20px; text-align: center; font-size: 16px; }
+        .nav-btn.primary { background: var(--accent-blue); color: #000; border: none; }
+        .nav-btn.danger { background: var(--accent-red); color: #fff; border: none; }
+        .target-display { text-align: center; margin-bottom: 20px; }
+        .target-label { font-size: 14px; color: var(--text-dim); text-transform: uppercase; }
+        .target-value { font-size: 76px; font-weight: 800; color: var(--accent-red); line-height: 1; margin: 8px 0; }
+        .dart-slots { display: flex; gap: 10px; margin-bottom: 20px; }
+        .slot { flex: 1; background: var(--card-bg); border: 2px solid transparent; border-radius: 14px; padding: 12px 5px; text-align: center; }
+        .slot.active { border-color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
+        .slot-val { font-size: 22px; font-weight: 800; min-height: 28px; }
+        .slot-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; margin-top: 4px; }
+        .input-section { background: var(--card-bg); border-radius: 20px; padding: 15px; border: 1px solid var(--border); }
+        .multi-row { display: flex; gap: 6px; margin-bottom: 10px; }
+        .btn-m { flex: 1; padding: 10px; background: #0F172A; border: 1px solid var(--border); border-radius: 10px; color: var(--text-main); font-weight: 800; cursor: pointer; }
+        .btn-m.active { background: var(--accent-red); color: #000; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 10px; }
+        .btn-n { padding: 12px 0; background: #0F172A; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; }
+        .bull-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .btn-b { padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #0F172A; color: #fff; font-weight: 700; cursor: pointer; }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .mini-stat { background: #0F172A; padding: 15px; border-radius: 12px; text-align: center; }
+        .ms-val { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+        .ms-lab { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+        .filter-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+        .f-btn { flex: 1; background: #0F172A; border: 1px solid var(--border); color: var(--text-dim); border-radius: 8px; padding: 8px 0; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+        .f-btn.active { background: var(--accent-blue); color: #000; border-color: var(--accent-blue); }
+        .f-btn.danger { flex: 0 0 40px; }
+        .f-btn.danger.active { background: var(--accent-red); color: #fff; border-color: var(--accent-red); }
+        .checklist-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
+        .check-pill { background: #0F172A; border: 1px solid var(--border); border-radius: 12px; padding: 12px 5px; text-align: center; }
+        .check-pill.done { border-color: var(--accent-green); background: rgba(74, 222, 128, 0.05); }
+        .check-pill.done .p-num { color: var(--accent-green); }
+        .p-num { font-size: 18px; font-weight: 800; color: #555; }
+        .p-prog { font-size: 10px; color: var(--text-dim); }
+        .match-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 15px; }
+        .btn-match-check { background: #0F172A; border: 1px solid var(--border); border-radius: 8px; padding: 12px 0; color: #555; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s; }
+        .btn-match-check.hit { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
+        .input-row { display: flex; gap: 8px; margin-bottom: 15px; }
+        .input-field { background: #0F172A; border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: #fff; font-family: inherit; flex: 1; outline: none; border-color: var(--border); min-width: 0;}
+        .table-wrap { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; background: var(--card-bg); }
+        th { background: rgba(255,255,255,0.05); text-align: left; padding: 10px 8px; font-size: 12px; color: var(--text-dim); }
+        td { padding: 10px 8px; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap;}
+        .shanghai-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .btn-sh { aspect-ratio: 1; background: rgba(248, 113, 113, 0.2); border: 1px solid var(--accent-red); border-radius: 12px; color: var(--accent-red); font-size: 22px; font-weight: 800; cursor: pointer; }
+        .btn-sh.completed { background: var(--accent-green); color: #000; border-color: var(--accent-green); }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 900; backdrop-filter: blur(4px); }
+        .overlay.active { display: block; }
+        .status-msg { margin-top: 15px; font-weight: 600; text-align: center; min-height: 40px; }
+        .profile-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-blue); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; flex-shrink: 0; }
+        .xp-toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(15, 23, 42, 0.95); border: 2px solid var(--accent-orange); color: var(--accent-orange); padding: 12px 24px; border-radius: 30px; font-weight: 900; font-size: 18px; opacity: 0; z-index: 2000; pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 15px rgba(251, 146, 60, 0.4); }
+        .xp-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .checkbox-container { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 5px 0; }
+        .checkbox-container input { width: 18px; height: 18px; accent-color: var(--accent-blue); cursor: pointer; }
+        .quest-card { background: #0F172A; border: 1px solid var(--border); border-radius: 12px; padding: 15px; position: relative; overflow: hidden; }
+        .quest-card.completed { border-color: var(--accent-green); }
+        .quest-title { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .quest-desc { font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 15px; }
+        .quest-reward { position: absolute; top: 15px; right: 15px; background: rgba(251, 146, 60, 0.2); color: var(--accent-orange); font-weight: 800; font-size: 12px; padding: 4px 8px; border-radius: 8px; }
+        .quest-card.completed .quest-reward { background: var(--accent-green); color: #000; }
+        .q-bar-bg { background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+        .q-bar-fill { background: var(--accent-blue); height: 100%; width: 0%; transition: width 0.4s ease; }
+        .quest-card.completed .q-bar-fill { background: var(--accent-green); }
+        .q-prog-text { font-size: 11px; color: var(--text-dim); text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="nav-group" id="auth-guest">
+            <span class="nav-label">Account</span>
+            <input type="email" id="emailIn" placeholder="Email" class="input-field" style="margin-bottom:8px; width:100%">
+            <input type="password" id="passIn" placeholder="Password" class="input-field" style="margin-bottom:12px; width:100%">
+            <div style="display: flex; gap: 8px;">
+                <button class="nav-btn primary" onclick="handleLogin()" style="margin-bottom:0; flex:1; justify-content:center;">Login</button>
+                <button class="nav-btn" onclick="handleReg()" style="margin-bottom:0; flex:1; justify-content:center;">Sign Up</button>
+            </div>
+            <div id="auth-err" style="color:var(--accent-red); font-size:11px; margin-top:8px;"></div>
+        </div>
+        <div class="nav-group" id="auth-user" style="display:none;">
+            <span class="nav-label">Player Profile</span>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div class="profile-avatar" id="profile-avatar">P</div>
+                <div style="flex: 1; overflow: hidden;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <div id="user-display" style="font-weight: 800; font-size: 16px; color: #FFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Player</div>
+                        <div style="font-size: 12px; font-weight: 800; color: var(--accent-orange);">Lv. <span id="user-level">1</span></div>
+                    </div>
+                    <div class="xp-bar-container" style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-top: 6px; overflow: hidden;">
+                        <div id="xp-fill" style="background: var(--accent-orange); height: 100%; width: 0%; transition: width 0.4s ease;"></div>
+                    </div>
+                    <div style="font-size: 10px; color: var(--text-dim); text-align: right; margin-top: 4px;"><span id="user-xp">0</span> / <span id="next-level-xp">100</span> XP</div>
+                </div>
+            </div>
+            <button class="nav-btn" onclick="switchView('view-home')"><i class="fa-solid fa-house"></i> Home Dashboard</button>
+            <button class="nav-btn danger" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </div>
+        <div class="nav-group">
+            <span class="nav-label">Practice Mode</span>
+            <button class="nav-btn" id="link-game" onclick="switchView('view-game')"><i class="fa-solid fa-bullseye"></i> Checkout Practice</button>
+            <button class="nav-btn" id="link-stats" onclick="switchView('view-stats')"><i class="fa-solid fa-chart-simple"></i> Practice Stats</button>
+        </div>
+        <div class="nav-group">
+            <span class="nav-label">Match Records</span>
+            <button class="nav-btn" id="link-match" onclick="switchView('view-match-checkouts')"><i class="fa-solid fa-trophy"></i> Match Checkouts</button>
+            <button class="nav-btn" id="link-99darts" onclick="switchView('view-99darts')"><i class="fa-solid fa-bolt"></i> 99 Darts Log</button>
+            <button class="nav-btn" id="link-shanghai" onclick="switchView('view-shanghai')"><i class="fa-solid fa-star"></i> Shanghai Challenge</button>
+        </div>
+        <div class="nav-group" id="progression-link-group" style="display:none;">
+            <span class="nav-label">Progression</span>
+            <button class="nav-btn" id="link-quests" onclick="switchView('view-quests')"><i class="fa-solid fa-gem"></i> Active Quests</button>
+        </div>
+        <div class="nav-group" id="social-link-group" style="display:none;">
+            <span class="nav-label">Community</span>
+            <button class="nav-btn" id="link-leaderboard" onclick="switchView('view-leaderboard')"><i class="fa-solid fa-globe"></i> Global Leaderboard</button>
+        </div>
+        <div class="nav-group" id="settings-link-group" style="display:none;">
+            <span class="nav-label">App Settings</span>
+            <button class="nav-btn" id="link-settings" onclick="switchView('view-settings')"><i class="fa-solid fa-gear"></i> Preferences</button>
+        </div>
+    </div>
+    <div id="view-home" class="view active">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="home-profile-card" id="home-profile-card">
+            <div class="home-avatar" id="home-avatar">
+                P
+                <div class="level-badge" id="home-level">1</div>
+            </div>
+            <div class="home-user-info">
+                <h2 id="home-nickname">Player</h2>
+                <div class="home-stats-row">
+                    <span><i class="fa-solid fa-star"></i> <span id="home-xp-display">0 XP</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="home-grid">
+            <div class="home-card card-local" onclick="switchView('view-game')">
+                <div>
+                    <h3>Checkout<br>Practice</h3>
+                    <p>Improve your finishing skills!</p>
+                </div>
+                <i class="fa-solid fa-bullseye bg-icon"></i>
+            </div>
+            <div class="home-card card-online" onclick="switchView('view-leaderboard')">
+                <div>
+                    <h3>Global<br>Ranks</h3>
+                    <p>Compete with players worldwide!</p>
+                </div>
+                <i class="fa-solid fa-globe bg-icon"></i>
+            </div>
+        </div>
+        <div class="nav-group" style="margin-top: 20px;">
+            <span class="nav-label">Daily Quests</span>
+            <div id="home-quests-mini"></div>
+        </div>
+    </div>
+    <div id="view-leaderboard" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="filter-tabs" id="lb-tabs" style="margin-bottom: 20px;">
+            <button class="f-btn active" onclick="loadLeaderboard('xp', this)">Top Players (XP)</button>
+            <button class="f-btn" onclick="loadLeaderboard('checkouts', this)">Top Grinders</button>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr id="lb-header"><th>Rank</th><th>Player</th><th>Level / XP</th></tr></thead>
+                <tbody id="table-leaderboard"></tbody>
+            </table>
+        </div>
+    </div>
+    <div id="view-quests" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div id="q-card-daily" style="margin-bottom: 20px;"></div>
+        <div id="q-card-weekly"></div>
+    </div>
+    <div id="view-game" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="target-display">
+            <div class="target-label">Target Score</div>
+            <div class="target-value" id="targetNum">--</div>
+        </div>
+        <div class="dart-slots">
+            <div class="slot active" id="slot0" onclick="setSlot(0)"><div class="slot-val" id="val0">--</div><div class="slot-label">Dart 1</div></div>
+            <div class="slot" id="slot1" onclick="setSlot(1)"><div class="slot-val" id="val1">--</div><div class="slot-label">Dart 2</div></div>
+            <div class="slot" id="slot2" onclick="setSlot(2)"><div class="slot-val" id="val2">--</div><div class="slot-label">Dart 3</div></div>
+        </div>
+        <div class="input-section">
+            <div class="multi-row">
+                <button class="btn-m active" id="m1" onclick="setMulti(1, 'S')">S</button>
+                <button class="btn-m" id="m2" onclick="setMulti(2, 'D')">D</button>
+                <button class="btn-m" id="m3" onclick="setMulti(3, 'T')">T</button>
+            </div>
+            <div class="num-grid" id="num-grid"></div>
+            <div class="bull-row">
+                <button class="btn-b" style="color:var(--accent-green)" onclick="recordBull(25, 'S-Bull')">S-Bull (25)</button>
+                <button class="btn-b" style="color:var(--accent-red)" onclick="recordBull(50, 'Bullseye')">Bullseye (50)</button>
+            </div>
+        </div>
+        <div id="game-msg" class="status-msg"></div>
+        <button class="nav-btn primary" style="margin-top:20px; justify-content:center;" onclick="newGame()">New Target</button>
+    </div>
+    <div id="view-stats" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="card">
+            <div class="target-label" style="margin-bottom:15px;">Performance Summary</div>
+            <div class="stat-grid">
+                <div class="mini-stat"><div class="ms-val" id="stat-total">0</div><div class="ms-lab">Total Legs</div></div>
+                <div class="mini-stat"><div class="ms-val" style="color:var(--accent-green)" id="stat-rate">0%</div><div class="ms-lab">Success Rate</div></div>
+                <div class="mini-stat"><div class="ms-val" style="color:var(--accent-red)" id="stat-bust">0</div><div class="ms-lab">Busts</div></div>
+                <div class="mini-stat"><div class="ms-val" id="stat-miss">0</div><div class="ms-lab">Missed</div></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="target-label" style="margin-bottom:10px; text-align:center;">Checklist Mastery (5x hits)</div>
+            <div id="practice-summary" style="font-size:14px; color:var(--text-dim); text-align:center; margin-bottom:15px;">Mastered: 0 / 162 (0%)</div>
+            <div class="filter-tabs" id="practice-filters">
+                <button class="f-btn" onclick="setPracticeFilter(1, this)">1-Dart</button>
+                <button class="f-btn" onclick="setPracticeFilter(2, this)">2-Dart</button>
+                <button class="f-btn" onclick="setPracticeFilter(3, this)">3-Dart</button>
+                <button class="f-btn" onclick="setPracticeFilter('all', this)">All</button>
+                <button class="f-btn danger active" onclick="setPracticeFilter('none', this)"><i class="fa-solid fa-eye-slash"></i></button>
+            </div>
+            <div class="filter-tabs" id="practice-status-filters">
+                <button class="f-btn active" onclick="setPracticeStatus('all', this)">Show All</button>
+                <button class="f-btn" style="color:var(--accent-green)" onclick="setPracticeStatus('done', this)">Mastered</button>
+                <button class="f-btn" onclick="setPracticeStatus('locked', this)">Locked</button>
+            </div>
+            <div class="checklist-container" id="checklist-grid"></div>
+        </div>
+    </div>
+    <div id="view-match-checkouts" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="card">
+            <div class="target-label" style="margin-bottom:10px;">Log Manual Checkout</div>
+            <div class="input-row" style="margin-bottom: 25px;">
+                <input type="number" id="manual-match-input" class="input-field" placeholder="E.g., 120" min="2" max="170">
+                <button class="btn-m" style="background:var(--accent-blue); color:#000; flex:0 0 auto; padding: 0 20px;" onclick="addManualMatchCheckout()">Add</button>
+            </div>
+            <div class="target-label" style="margin-bottom:10px; text-align:center;">Real Match Checklist</div>
+            <div id="match-summary" style="font-size:14px; color:var(--text-dim); text-align:center; margin-bottom:15px;">Completed: 0 / 162 (0%)</div>
+            <div class="filter-tabs" id="match-filters">
+                <button class="f-btn" onclick="setMatchFilter(1, this)">1-Dart</button>
+                <button class="f-btn" onclick="setMatchFilter(2, this)">2-Dart</button>
+                <button class="f-btn" onclick="setMatchFilter(3, this)">3-Dart</button>
+                <button class="f-btn" onclick="setMatchFilter('all', this)">All</button>
+                <button class="f-btn danger active" onclick="setMatchFilter('none', this)"><i class="fa-solid fa-eye-slash"></i></button>
+            </div>
+            <div class="filter-tabs" id="match-status-filters">
+                <button class="f-btn active" onclick="setMatchStatus('all', this)">Show All</button>
+                <button class="f-btn" style="color:var(--accent-green)" onclick="setMatchStatus('done', this)">Completed</button>
+                <button class="f-btn" onclick="setMatchStatus('locked', this)">Locked</button>
+            </div>
+            <div class="match-grid" id="match-checkouts-grid"></div>
+        </div>
+    </div>
+    <div id="view-99darts" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="card">
+            <div class="target-label" style="margin-bottom:10px;">Log New Score</div>
+            <div class="input-row">
+                <input type="text" id="date99" class="input-field" placeholder="MM/DD/YYYY" onfocus="this.type='date'" onblur="if(!this.value) this.type='text'">
+                <input type="number" id="score99" class="input-field" placeholder="Score">
+                <button class="btn-m" style="background:var(--accent-green); color:#000; flex:0 0 45px; padding:0; display:flex; align-items:center; justify-content:center; font-size:24px;" onclick="save99()">+</button>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Date</th><th>Score</th><th>AVG</th></tr></thead>
+                    <tbody id="table99"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="view-shanghai" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="card">
+            <div class="target-label" style="margin-bottom:15px; text-align:center;">Click sectors hit in Shanghai Challenge</div>
+            <div class="shanghai-grid" id="sh-grid"></div>
+        </div>
+    </div>
+    <div id="view-settings" class="view">
+        <div class="app-header">
+            <button class="menu-toggle" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+            <svg width="210" height="40" viewBox="0 0 210 40" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(0, 0)">
+                    <circle cx="20" cy="20" r="18" fill="var(--card-bg)" stroke="var(--text-dim)" stroke-width="2"/>
+                    <path d="M20,2 L20,38 M2,20 L38,20 M7.2,7.2 L32.8,32.8 M7.2,32.8 L32.8,7.2" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+                    <circle cx="20" cy="20" r="11" fill="none" stroke="var(--accent-red)" stroke-width="2"/>
+                    <circle cx="20" cy="20" r="3.5" fill="var(--accent-green)"/>
+                    <path d="M34,6 L18.5,21.5" stroke="var(--text-main)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M36,4 L31,1 L28,6 L33,9 Z" fill="var(--accent-blue)"/>
+                    <path d="M36,4 L39,9 L34,12 L31,7 Z" fill="var(--accent-orange)"/>
+                </g>
+                <text x="48" y="17" font-family="Urbanist, sans-serif" font-size="16" font-weight="900" fill="var(--text-main)" letter-spacing="1">CHECKOUT</text>
+                <text x="48" y="33" font-family="Urbanist, sans-serif" font-size="15" font-weight="800" fill="var(--accent-orange)" letter-spacing="3">GRINDER</text>
+            </svg>
+            <div style="width:45px"></div>
+        </div>
+        <div class="card">
+            <div class="target-label" style="margin-bottom:15px;">Profile Details</div>
+            <div class="input-row" style="margin-bottom: 5px;">
+                <input type="text" id="nicknameIn" placeholder="Enter Nickname" class="input-field">
+                <button class="btn-m" style="background:var(--accent-blue); color:#000; flex:0 0 auto; padding:0 15px;" onclick="saveNickname()">Save</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="target-label" style="margin-bottom:15px;">Game Settings</div>
+            <div style="margin-bottom: 8px; font-size: 14px; color: var(--text-dim);">Favorite Setup Double</div>
+            <select id="favDoubleSelect" onchange="saveGameSettings()" class="input-field" style="width:100%; margin-bottom: 20px;">
+                <option value="40">D20 (Top)</option>
+                <option value="32">D16</option>
+                <option value="36">D18</option>
+                <option value="16">D8</option>
+                <option value="20">D10</option>
+                <option value="24">D12</option>
+            </select>
+            <div style="margin-bottom: 8px; font-size: 14px; color: var(--text-dim);">Math Difficulty</div>
+            <select id="diffSelect" onchange="saveGameSettings()" class="input-field" style="width:100%; margin-bottom: 20px;">
+                <option value="easy">Beginner (Show Remainder)</option>
+                <option value="hard">Pro (Mental Math Only)</option>
+            </select>
+            <label class="checkbox-container">
+                <input type="checkbox" id="showRouteCheck" onchange="saveGameSettings()">
+                <span style="font-size: 15px; font-weight: 600;">Show Checkout Routes (Tips)</span>
+            </label>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, where, doc, setDoc, getDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        const k1 = "AIzaSyCteNQZ";
+        const k2 = "FF7vcHCfbt4k";
+        const k3 = "NrO5V9UJizlk0as";
+        const firebaseConfig = {
+            apiKey: k1 + k2 + k3,
+            authDomain: "the-darts-project.firebaseapp.com",
+            projectId: "the-darts-project",
+            storageBucket: "the-darts-project.firebasestorage.app",
+            messagingSenderId: "287365907473",
+            appId: "1:287365907473:web:63245870324e15cce81db0"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let user = null;
+        let userXP = 0;
+        let userPracticeCount = 0;
+        let preferredDouble = 40; 
+        let diff = 'easy';
+        let showRoute = false;
+        let userQuests = { daily: [], weekly: [], lastDaily: '', lastWeekly: '' };
+        const questDB = {
+            daily: [
+                { id: 'd1', desc: 'Complete 5 Practice Checkouts', type: 'practice_co', target: 5, xp: 10 },
+                { id: 'd2', desc: 'Complete 10 Practice Checkouts', type: 'practice_co', target: 10, xp: 20 },
+                { id: 'd3', desc: 'Complete 15 Practice Checkouts', type: 'practice_co', target: 15, xp: 30 },
+                { id: 'd4', desc: 'Hit 3 Shanghai sectors', type: 'shanghai_hit', target: 3, xp: 15 },
+                { id: 'd5', desc: 'Hit 5 Shanghai sectors', type: 'shanghai_hit', target: 5, xp: 25 },
+                { id: 'd6', desc: 'Log one 99 Darts session', type: 'play_99', target: 1, xp: 20 }
+            ],
+            weekly: [
+                { id: 'w1', desc: 'Complete 50 Practice Checkouts', type: 'practice_co', target: 50, xp: 100 },
+                { id: 'w2', desc: 'Complete 75 Practice Checkouts', type: 'practice_co', target: 75, xp: 150 },
+                { id: 'w3', desc: 'Master 1 new Checkout (5 hits)', type: 'master_co', target: 1, xp: 100 },
+                { id: 'w4', desc: 'Log two 99 Darts sessions', type: 'play_99', target: 2, xp: 100 },
+                { id: 'w5', desc: 'Hit 10 Shanghai sectors', type: 'shanghai_hit', target: 10, xp: 100 },
+                { id: 'w6', desc: 'Master 2 new Checkouts', type: 'master_co', target: 2, xp: 200 }
+            ]
+        };
+        function getTodayStr() {
+            const d = new Date();
+            return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+        }
+        function getWeekStr() {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+            const week1 = new Date(d.getFullYear(), 0, 4);
+            const weekNum = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            return d.getFullYear() + "-W" + weekNum;
+        }
+        function getRandomQuests(arr, count) {
+            let shuffled = [...arr].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+        async function initQuests(uData) {
+            let q = uData.quests || { daily: [], weekly: [], lastDaily: '', lastWeekly: '' };
+            let changed = false;
+            const today = getTodayStr();
+            const week = getWeekStr();
+            if (q.lastDaily !== today || !q.daily || q.daily.length < 2) {
+                const selected = getRandomQuests(questDB.daily, 2);
+                q.daily = selected.map(sq => ({ ...sq, progress: 0, completed: false }));
+                q.lastDaily = today;
+                changed = true;
+            }
+            if (q.lastWeekly !== week || !q.weekly || q.weekly.length < 2) {
+                const selected = getRandomQuests(questDB.weekly, 2);
+                q.weekly = selected.map(sq => ({ ...sq, progress: 0, completed: false }));
+                q.lastWeekly = week;
+                changed = true;
+            }
+            userQuests = q;
+            if (changed && user) {
+                await setDoc(doc(db, "user_meta", user.uid), { quests: q }, { merge: true });
+            }
+            renderQuests();
+        }
+        async function addQuestProgress(type, amount) {
+            if(!user || !userQuests || !userQuests.daily || !userQuests.weekly) return;
+            let changed = false;
+            ['daily', 'weekly'].forEach(period => {
+                userQuests[period].forEach(q => {
+                    if (q.type === type && !q.completed) {
+                        q.progress += amount;
+                        if(q.progress < 0) q.progress = 0;
+                        if (q.progress >= q.target) {
+                            q.progress = q.target;
+                            q.completed = true;
+                            addXP(q.xp);
+                            showXPToast(`Quest Completed! +${q.xp} XP`);
+                        }
+                        changed = true;
+                    }
+                });
+            });
+            if (changed) {
+                renderQuests();
+                setDoc(doc(db, "user_meta", user.uid), { quests: userQuests }, { merge: true });
+            }
+        }
+        function renderQuests() {
+            const dContainer = document.getElementById('q-card-daily');
+            const wContainer = document.getElementById('q-card-weekly');
+            const hContainer = document.getElementById('home-quests-mini');
+            if(!dContainer || !wContainer) return;
+            let dHtml = '<div class="target-label" style="margin-bottom:10px;">Daily Quests</div>';
+            let hHtml = '';
+            userQuests.daily.forEach(q => {
+                const pct = Math.min((q.progress / q.target) * 100, 100);
+                const cardHtml = `
+                    <div class="quest-card ${q.completed ? 'completed' : ''}" style="margin-bottom:10px;">
+                        <div class="quest-reward">${q.completed ? 'CLAIMED' : q.xp + ' XP'}</div>
+                        <div class="quest-desc" style="font-size:14px;">${q.desc}</div>
+                        <div class="q-bar-bg">
+                            <div class="q-bar-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="q-prog-text">${q.progress} / ${q.target}</div>
+                    </div>
+                `;
+                dHtml += cardHtml;
+                hHtml += cardHtml;
+            });
+            dContainer.innerHTML = dHtml;
+            if(hContainer) {
+                hContainer.innerHTML = hHtml || '<div style="font-size:13px; color:var(--text-dim)">No active daily quests.</div>';
+            }
+            let wHtml = '<div class="target-label" style="margin-bottom:10px; margin-top:20px;">Weekly Quests</div>';
+            userQuests.weekly.forEach(q => {
+                const pct = Math.min((q.progress / q.target) * 100, 100);
+                wHtml += `
+                    <div class="quest-card ${q.completed ? 'completed' : ''}" style="margin-bottom:10px;">
+                        <div class="quest-reward">${q.completed ? 'CLAIMED' : q.xp + ' XP'}</div>
+                        <div class="quest-desc" style="font-size:14px;">${q.desc}</div>
+                        <div class="q-bar-bg">
+                            <div class="q-bar-fill" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="q-prog-text">${q.progress} / ${q.target}</div>
+                    </div>
+                `;
+            });
+            wContainer.innerHTML = wHtml;
+        }
+        const bogies = [159, 162, 163, 165, 166, 168, 169];
+        const outSet = new Set([50]);
+        for(let i=1; i<=20; i++) outSet.add(i*2);
+        const d1Set = new Set([25, 50]);
+        for(let i=1; i<=20; i++) { d1Set.add(i); d1Set.add(i*2); d1Set.add(i*3); }
+        function getDartsNeeded(score) {
+            if (outSet.has(score)) return 1;
+            for (let d1 of d1Set) {
+                if (outSet.has(score - d1)) return 2;
+            }
+            return 3;
+        }
+        function getDartString(v) {
+            if(v === 25) return "BULL";
+            if(v === 50) return "BULLSEYE";
+            if(v <= 20) return "S" + v;
+            if(v % 3 === 0 && v <= 60) return "T" + (v/3);
+            if(v % 2 === 0 && v <= 40) return "D" + (v/2);
+            return null;
+        }
+        function findRoute(score, dartsLeft) {
+            let route = searchRoute(score, dartsLeft, preferredDouble);
+            if (route) return route;
+            const popularDoubles = [40, 32, 36, 16, 24, 20, 50, 28, 22, 18, 12, 8, 4, 2];
+            for (let d of popularDoubles) {
+                if (d === preferredDouble) continue;
+                route = searchRoute(score, dartsLeft, d);
+                if (route) return route;
+            }
+            return "";
+        }
+        function searchRoute(score, dartsLeft, targetDouble) {
+            if (score === targetDouble) return getDartString(targetDouble);
+            if (dartsLeft <= 1) return null;
+            if (dartsLeft >= 2) {
+                let d1 = getDartString(score - targetDouble);
+                if (d1) return d1 + " ➔ " + getDartString(targetDouble);
+            }
+            if (dartsLeft === 3) {
+                const setups = [60, 57, 54, 51, 48, 45, 42, 39, 36, 33, 30, 25, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10];
+                for (let s of setups) {
+                    let d2 = getDartString(score - s - targetDouble);
+                    if (d2) return getDartString(s) + " ➔ " + d2 + " ➔ " + getDartString(targetDouble);
+                }
+            }
+            return null;
+        }
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (u) {
+                document.getElementById('auth-guest').style.display = 'none';
+                document.getElementById('auth-user').style.display = 'block';
+                document.getElementById('social-link-group').style.display = 'block';
+                document.getElementById('settings-link-group').style.display = 'block';
+                document.getElementById('progression-link-group').style.display = 'block';
+                document.getElementById('home-profile-card').onclick = null;
+                document.getElementById('home-profile-card').style.cursor = 'default';
+                loadAllData();
+                switchView('view-home');
+            } else {
+                document.getElementById('auth-guest').style.display = 'block';
+                document.getElementById('auth-user').style.display = 'none';
+                document.getElementById('social-link-group').style.display = 'none';
+                document.getElementById('settings-link-group').style.display = 'none';
+                document.getElementById('progression-link-group').style.display = 'none';
+                document.getElementById('home-nickname').innerText = "Log in or Sign Up";
+                document.getElementById('home-avatar').firstChild.textContent = "?";
+                document.getElementById('home-level').innerText = "-";
+                document.getElementById('home-xp-display').innerText = "Guest Mode";
+                document.getElementById('home-quests-mini').innerHTML = "<div style='font-size:13px; color:var(--text-dim)'>Log in to access daily quests.</div>";
+                const pCard = document.getElementById('home-profile-card');
+                pCard.onclick = () => { if(!document.getElementById('sidebar').classList.contains('open')) toggleMenu(); };
+                pCard.style.cursor = 'pointer';
+                switchView('view-home');
+            }
+        });
+        window.handleLogin = () => {
+            const e = document.getElementById('emailIn').value;
+            const p = document.getElementById('passIn').value;
+            signInWithEmailAndPassword(auth, e, p).catch(() => document.getElementById('auth-err').innerText = "Login failed.");
+        };
+        window.handleReg = () => {
+            const e = document.getElementById('emailIn').value;
+            const p = document.getElementById('passIn').value;
+            createUserWithEmailAndPassword(auth, e, p).catch(err => document.getElementById('auth-err').innerText = err.message);
+        };
+        window.handleLogout = () => signOut(auth);
+        window.toggleMenu = () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+        };
+        window.switchView = (viewId) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            const linkId = 'link-' + viewId.replace('view-', '');
+            if(document.getElementById(linkId)) document.getElementById(linkId).classList.add('active');
+            if(document.getElementById('sidebar').classList.contains('open')) toggleMenu();
+            if (user) loadViewData(viewId);
+        };
+        function loadAllData() {
+            const activeView = document.querySelector('.view.active').id;
+            loadViewData(activeView);
+            loadProfileData();
+        }
+        function loadViewData(viewId) {
+            if (viewId === 'view-stats') loadStats();
+            if (viewId === 'view-match-checkouts') loadMatchCheckouts();
+            if (viewId === 'view-99darts') load99();
+            if (viewId === 'view-shanghai') loadShanghai();
+            if (viewId === 'view-leaderboard') loadLeaderboard('xp');
+        }
+        async function loadProfileData() {
+            if(!user) return;
+            try {
+                const uDoc = await getDoc(doc(db, "user_meta", user.uid));
+                let nickname = user.email.split('@')[0]; 
+                if(uDoc.exists()) {
+                    let uData = uDoc.data();
+                    if(uData.nickname) nickname = uData.nickname;
+                    if(uData.xp !== undefined) userXP = uData.xp;
+                    if(uData.practiceCount !== undefined) userPracticeCount = uData.practiceCount;
+                    if(uData.favDouble !== undefined) preferredDouble = uData.favDouble;
+                    if(uData.difficulty !== undefined) diff = uData.difficulty;
+                    if(uData.showRoute !== undefined) showRoute = uData.showRoute;
+                    initQuests(uData);
+                } else {
+                    initQuests({});
+                }
+                document.getElementById('user-display').innerText = nickname;
+                document.getElementById('profile-avatar').innerText = nickname.charAt(0).toUpperCase();
+                document.getElementById('home-nickname').innerText = nickname;
+                document.getElementById('home-avatar').firstChild.textContent = nickname.charAt(0).toUpperCase();
+                document.getElementById('nicknameIn').value = nickname;
+                document.getElementById('favDoubleSelect').value = preferredDouble;
+                document.getElementById('diffSelect').value = diff;
+                document.getElementById('showRouteCheck').checked = showRoute;
+                updateXPUI();
+            } catch(e) {
+                console.error(e);
+            }
+        }
+        window.saveNickname = async () => {
+            if(!user) return;
+            const nn = document.getElementById('nicknameIn').value.trim();
+            if(!nn) return;
+            await setDoc(doc(db, "user_meta", user.uid), { nickname: nn }, { merge: true });
+            loadProfileData();
+        };
+        window.saveGameSettings = async () => {
+            preferredDouble = parseInt(document.getElementById('favDoubleSelect').value);
+            diff = document.getElementById('diffSelect').value;
+            showRoute = document.getElementById('showRouteCheck').checked;
+            if(user) {
+                await setDoc(doc(db, "user_meta", user.uid), { 
+                    favDouble: preferredDouble,
+                    difficulty: diff,
+                    showRoute: showRoute
+                }, { merge: true });
+            }
+        };
+        async function addXP(amount) {
+            if(!user) return;
+            userXP += amount;
+            if(userXP < 0) userXP = 0;
+            await setDoc(doc(db, "user_meta", user.uid), { xp: userXP }, { merge: true });
+            showXPToast(amount > 0 ? `+${amount} XP` : `${amount} XP`);
+            updateXPUI();
+        }
+        function updateXPUI() {
+            const level = Math.floor(0.1 * Math.sqrt(userXP)) + 1;
+            const nextXP = Math.pow(level / 0.1, 2);
+            const currentLevelBaseXP = Math.pow((level - 1) / 0.1, 2);
+            const xpIntoLevel = userXP - currentLevelBaseXP;
+            const xpRequiredForNext = nextXP - currentLevelBaseXP;
+            let progressPercent = (xpIntoLevel / xpRequiredForNext) * 100;
+            if (progressPercent > 100) progressPercent = 100;
+            if (progressPercent < 0) progressPercent = 0;
+            document.getElementById('user-level').innerText = level;
+            document.getElementById('user-xp').innerText = Math.round(userXP);
+            document.getElementById('next-level-xp').innerText = Math.round(nextXP);
+            document.getElementById('xp-fill').style.width = `${progressPercent}%`;
+            document.getElementById('home-level').innerText = level;
+            document.getElementById('home-xp-display').innerText = Math.round(userXP) + " XP";
+        }
+        function showXPToast(text) {
+            const toast = document.createElement('div');
+            toast.className = 'xp-toast';
+            toast.innerText = text;
+            if(text.includes('-')) {
+                toast.style.color = 'var(--accent-red)';
+                toast.style.borderColor = 'var(--accent-red)';
+                toast.style.boxShadow = '0 4px 15px rgba(248, 113, 113, 0.4)';
+            }
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.classList.add('show'); }, 10);
+            setTimeout(() => { 
+                toast.classList.remove('show'); 
+                setTimeout(() => toast.remove(), 400);
+            }, 1500);
+        }
+        window.loadLeaderboard = async (type, btn) => {
+            if (btn) {
+                const container = document.getElementById('lb-tabs');
+                container.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            const t = document.getElementById('table-leaderboard');
+            const h = document.getElementById('lb-header');
+            t.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Loading global ranks...</td></tr>";
+            try {
+                let q;
+                if (type === 'xp') {
+                    h.innerHTML = "<th>Rank</th><th>Player</th><th>Level / XP</th>";
+                    q = query(collection(db, "user_meta"), orderBy("xp", "desc"), limit(50));
+                } else {
+                    h.innerHTML = "<th>Rank</th><th>Player</th><th>Checkouts</th>";
+                    q = query(collection(db, "user_meta"), orderBy("practiceCount", "desc"), limit(50));
+                }
+                const snap = await getDocs(q);
+                let html = "";
+                let rank = 1;
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const name = data.nickname || "Unknown Player";
+                    let rowStyle = "";
+                    let medal = rank;
+                    if (rank === 1) { rowStyle = "background: rgba(255, 215, 0, 0.15); color: #FFD700; font-weight: 800;"; medal = "🥇"; }
+                    else if (rank === 2) { rowStyle = "background: rgba(192, 192, 192, 0.1); color: #C0C0C0; font-weight: 800;"; medal = "🥈"; }
+                    else if (rank === 3) { rowStyle = "background: rgba(205, 127, 50, 0.15); color: #CD7F32; font-weight: 800;"; medal = "🥉"; }
+                    let displayVal = "";
+                    if (type === 'xp') {
+                        const lvl = Math.floor(0.1 * Math.sqrt(data.xp || 0)) + 1;
+                        displayVal = `Lv. ${lvl} <span style="font-size:10px; color:var(--text-dim)">(${data.xp || 0} XP)</span>`;
+                    } else {
+                        displayVal = data.practiceCount || 0;
+                    }
+                    if (user && doc.id === user.uid && rank > 3) {
+                        rowStyle = "background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); font-weight: 800;";
+                    }
+                    html += `<tr style="${rowStyle}">
+                        <td style="font-weight: 800;">${medal}</td>
+                        <td style="font-weight: 800;">${name}</td>
+                        <td>${displayVal}</td>
+                    </tr>`;
+                    rank++;
+                });
+                if (html === "") html = "<tr><td colspan='3' style='text-align:center;'>No data yet.</td></tr>";
+                t.innerHTML = html;
+            } catch (e) {
+                console.error(e);
+                t.innerHTML = "<tr><td colspan='3' style='text-align:center; color:var(--accent-red)'>Error loading leaderboard.</td></tr>";
+            }
+        };
+        let target = 0;
+        let currentIdx = 0; let multi = 1; let mLabel = 'S'; let darts = [null, null, null];
+        let gameOver = false;
+        window.newGame = () => {
+            target = Math.floor(Math.random() * (170 - 40 + 1)) + 40;
+            while (bogies.includes(target)) {
+                target = Math.floor(Math.random() * (170 - 40 + 1)) + 40;
+            }
+            document.getElementById('targetNum').innerText = target;
+            let msgStr = "Ready. Aim. Fire.";
+            if (showRoute) {
+                let route = findRoute(target, 3);
+                if(route) msgStr += `<br><span style="font-size:14px; color:var(--accent-blue)">👉 ${route}</span>`;
+            }
+            document.getElementById('game-msg').innerHTML = msgStr;
+            document.getElementById('game-msg').style.color = "var(--text-dim)";
+            darts = [null, null, null]; currentIdx = 0; gameOver = false; setMulti(1, 'S'); updateUI();
+        };
+        function updateUI() {
+            for (let i = 0; i < 3; i++) {
+                const s = document.getElementById(`slot${i}`);
+                const v = document.getElementById(`val${i}`);
+                v.innerText = darts[i] ? darts[i].text : "--";
+                s.classList.toggle('active', i === currentIdx && !gameOver);
+            }
+        }
+        window.setMulti = (m, l) => {
+            multi = m;
+            mLabel = l;
+            document.getElementById('m1').classList.toggle('active', m === 1);
+            document.getElementById('m2').classList.toggle('active', m === 2);
+            document.getElementById('m3').classList.toggle('active', m === 3);
+        };
+        window.setSlot = (i) => { if(!gameOver) { currentIdx = i; updateUI(); } };
+        window.recordNum = (n) => {
+            if (gameOver || currentIdx > 2) return;
+            darts[currentIdx] = { val: n * multi, text: mLabel + n, m: multi };
+            currentIdx++; updateUI(); checkResult();
+        };
+        window.recordBull = (p, t) => {
+            if (gameOver || currentIdx > 2) return;
+            darts[currentIdx] = { val: p, text: t, m: (p === 50 ? 2 : 1) };
+            currentIdx++; updateUI(); checkResult();
+        };
+        async function checkResult() {
+            let sum = 0;
+            let lastM = 1;
+            darts.forEach(d => { if(d) { sum += d.val; lastM = d.m; } });
+            const rem = target - sum; const msg = document.getElementById('game-msg');
+            const dartsLeft = 3 - currentIdx;
+            if (rem === 0 && lastM === 2) {
+                msg.innerHTML = "CHECKOUT! 🎯";
+                msg.style.color = "var(--accent-green)"; gameOver = true; saveGame("Success");
+                userPracticeCount++;
+                await setDoc(doc(db, "user_meta", user.uid), { practiceCount: userPracticeCount }, { merge: true });
+                addXP(10);
+                addQuestProgress('practice_co', 1);
+                if (!practiceDataMap[target]) practiceDataMap[target] = 0;
+                practiceDataMap[target]++;
+                if (practiceDataMap[target] === 5) {
+                    addQuestProgress('master_co', 1);
+                }
+                renderPracticeGrid();
+                setTimeout(() => { if(gameOver) newGame(); }, 1200); 
+            } else if (rem < 0 || (rem === 0 && lastM !== 2) || rem === 1) {
+                let msgStr = "BUSTED!";
+                if(showRoute) {
+                    let route = findRoute(target, 3);
+                    msgStr += `<br><span style="font-size:14px; color:var(--text-dim)">Ideal for ${target}: ${route}</span>`; 
+                }
+                msg.innerHTML = msgStr;
+                msg.style.color = "var(--accent-red)"; gameOver = true; saveGame("Bust");
+            } else if (currentIdx === 3) {
+                let msgStr = `Missed.\nRemainder: ${rem}`;
+                if(showRoute) {
+                    let route = findRoute(target, 3);
+                    msgStr += `<br><span style="font-size:14px; color:var(--text-dim)">Ideal for ${target}: ${route}</span>`;
+                }
+                msg.innerHTML = msgStr;
+                msg.style.color = "var(--accent-orange)"; gameOver = true; saveGame("Miss");
+            } else {
+                let msgStr = diff === 'easy' ? `Remaining: ${rem}` : "Math mode on...";
+                if (showRoute && rem > 1 && rem <= 170) {
+                    let route = findRoute(rem, dartsLeft);
+                    if(route) msgStr += `<br><span style="font-size:14px; color:var(--accent-blue)">👉 ${route}</span>`;
+                }
+                msg.innerHTML = msgStr;
+            }
+        }
+        async function saveGame(res) {
+            if (!user) return;
+            const dStr = darts.filter(d => d).map(d => d.text);
+            await addDoc(collection(db, "meccsek"), { uid: user.uid, target: target, result: res, darts: dStr, ts: serverTimestamp() });
+        }
+        let practiceDataMap = {};
+        let currentPracticeFilter = 'none';
+        let currentPracticeStatus = 'all';
+        let matchCheckoutsData = [];
+        let currentMatchFilter = 'none';
+        let currentMatchStatus = 'all';
+        window.setPracticeFilter = (val, btn) => {
+            currentPracticeFilter = val;
+            const container = document.getElementById('practice-filters');
+            container.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderPracticeGrid();
+        };
+        window.setPracticeStatus = (val, btn) => {
+            currentPracticeStatus = val;
+            const container = document.getElementById('practice-status-filters');
+            container.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (currentPracticeFilter === 'none') {
+                const allBtn = document.getElementById('practice-filters').children[3];
+                window.setPracticeFilter('all', allBtn); 
+            } else {
+                renderPracticeGrid();
+            }
+        };
+        async function loadStats() {
+            const q = query(collection(db, "meccsek"), where("uid", "==", user.uid));
+            const snap = await getDocs(q);
+            practiceDataMap = {}; let total = 0, win = 0, bust = 0, miss = 0;
+            snap.forEach(d => {
+                total++; const data = d.data();
+                if (data.result === "Success") { win++; practiceDataMap[data.target] = (practiceDataMap[data.target] || 0) + 1; }
+                else if (data.result === "Bust") bust++; else miss++;
+            });
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-rate').innerText = total > 0 ? Math.round((win/total)*100) + "%" : "0%";
+            document.getElementById('stat-bust').innerText = bust; document.getElementById('stat-miss').innerText = miss;
+            renderPracticeGrid();
+        }
+        function renderPracticeGrid() {
+            const grid = document.getElementById('checklist-grid');
+            if (currentPracticeFilter === 'none') {
+                grid.innerHTML = "";
+            } else {
+                let html = "";
+                for (let i = 2; i <= 170; i++) {
+                    if (bogies.includes(i)) continue;
+                    const cat = getDartsNeeded(i);
+                    if (currentPracticeFilter !== 'all' && cat !== currentPracticeFilter) continue;
+                    const hits = practiceDataMap[i] || 0;
+                    const ok = hits >= 5;
+                    if (currentPracticeStatus === 'done' && !ok) continue;
+                    if (currentPracticeStatus === 'locked' && ok) continue;
+                    html += `<div class="check-pill ${ok ? 'done' : ''}"><div class="p-num">${i}</div><div class="p-prog">${ok ? 'MASTERED' : hits + '/5'}</div></div>`;
+                }
+                grid.innerHTML = html;
+            }
+            let mastered = 0;
+            for (let i = 2; i <= 170; i++) {
+                if (bogies.includes(i)) continue;
+                if ((practiceDataMap[i] || 0) >= 5) mastered++;
+            }
+            document.getElementById('practice-summary').innerText = `Mastered: ${mastered} / 162 (${Math.round((mastered/162)*100)}%)`;
+        }
+        window.setMatchFilter = (val, btn) => {
+            currentMatchFilter = val;
+            const container = document.getElementById('match-filters');
+            container.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderMatchGrid();
+        };
+        window.setMatchStatus = (val, btn) => {
+            currentMatchStatus = val;
+            const container = document.getElementById('match-status-filters');
+            container.querySelectorAll('.f-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (currentMatchFilter === 'none') {
+                const allBtn = document.getElementById('match-filters').children[3];
+                window.setMatchFilter('all', allBtn); 
+            } else {
+                renderMatchGrid();
+            }
+        };
+        async function loadMatchCheckouts() {
+            const uDoc = await getDoc(doc(db, "user_meta", user.uid));
+            matchCheckoutsData = (uDoc.exists() && uDoc.data().match_checkouts) ? uDoc.data().match_checkouts : [];
+            renderMatchGrid();
+        }
+        function renderMatchGrid() {
+            const grid = document.getElementById('match-checkouts-grid');
+            if (currentMatchFilter === 'none') {
+                grid.innerHTML = "";
+            } else {
+                let html = "";
+                for (let i = 2; i <= 170; i++) {
+                    if (bogies.includes(i)) continue;
+                    const cat = getDartsNeeded(i);
+                    if (currentMatchFilter !== 'all' && cat !== currentMatchFilter) continue;
+                    const hit = matchCheckoutsData.includes(i);
+                    if (currentMatchStatus === 'done' && !hit) continue;
+                    if (currentMatchStatus === 'locked' && hit) continue;
+                    html += `<button class="btn-match-check ${hit ? 'hit' : ''}" onclick="toggleMatchCheckout(${i})">${i}</button>`;
+                }
+                grid.innerHTML = html;
+            }
+            const count = matchCheckoutsData.length;
+            document.getElementById('match-summary').innerText = `Completed: ${count} / 162 (${Math.round((count/162)*100)}%)`;
+        }
+        window.toggleMatchCheckout = async (n) => {
+            if (!user) return;
+            if (matchCheckoutsData.includes(n)) {
+                matchCheckoutsData = matchCheckoutsData.filter(x => x !== n);
+                addXP(-50);
+            } else {
+                matchCheckoutsData.push(n);
+                addXP(50);
+            }
+            renderMatchGrid();
+            await setDoc(doc(db, "user_meta", user.uid), { match_checkouts: matchCheckoutsData }, { merge: true });
+        };
+        window.addManualMatchCheckout = async () => {
+            if (!user) return;
+            const inputEl = document.getElementById('manual-match-input');
+            const n = parseInt(inputEl.value);
+            if (isNaN(n) || n < 2 || n > 170) { alert("Please enter a valid checkout between 2 and 170."); return; }
+            if (bogies.includes(n)) { alert(n + " is a bogey number (impossible to checkout)."); return; }
+            if (!matchCheckoutsData.includes(n)) {
+                matchCheckoutsData.push(n);
+                addXP(50);
+                renderMatchGrid();
+                await setDoc(doc(db, "user_meta", user.uid), { match_checkouts: matchCheckoutsData }, { merge: true });
+            }
+            inputEl.value = ""; 
+        };
+        async function load99() {
+            const t = document.getElementById('table99');
+            t.innerHTML = "<tr><td colspan='3'>Syncing...</td></tr>";
+            try {
+                const q = query(collection(db, "kihivas_99darts"), where("uid", "==", user.uid));
+                const snap = await getDocs(q);
+                let logs = [];
+                snap.forEach(d => logs.push(d.data()));
+                logs.sort((a, b) => b.score - a.score);
+                let html = logs.length === 0 ? "<tr><td colspan='3'>No logs found.</td></tr>" : "";
+                logs.forEach((data, index) => {
+                    let rowStyle = "";
+                    let medal = "";
+                    if (index === 0) {
+                        rowStyle = "background: rgba(255, 215, 0, 0.15); color: #FFD700; font-weight: 800;";
+                        medal = "🥇 ";
+                    } else if (index === 1) {
+                        rowStyle = "background: rgba(192, 192, 192, 0.1); color: #C0C0C0; font-weight: 800;";
+                        medal = "🥈 ";
+                    } else if (index === 2) {
+                        rowStyle = "background: rgba(205, 127, 50, 0.15); color: #CD7F32; font-weight: 800;";
+                        medal = "🥉 ";
+                    }
+                    let displayDate = data.date;
+                    if (displayDate && displayDate.includes('-')) {
+                        const [year, month, day] = displayDate.split('-');
+                        displayDate = `${month}/${day}/${year}`;
+                    }
+                    html += `<tr style="${rowStyle}">
+                        <td>${displayDate}</td>
+                        <td>${medal}${data.score}</td>
+                        <td style='color:var(--accent-green); font-weight:800;'>${data.avg}</td>
+                    </tr>`;
+                });
+                t.innerHTML = html;
+            } catch (e) { 
+                console.error("Hiba a betöltéskor:", e);
+                t.innerHTML = "<tr><td colspan='3' style='color:var(--accent-red)'>Error loading data. Check console.</td></tr>"; 
+            }
+        }
+        window.save99 = async () => {
+            let d = document.getElementById('date99').value;
+            const s = parseInt(document.getElementById('score99').value);
+            if (!d) {
+                d = new Date().toISOString().split('T')[0];
+                document.getElementById('date99').value = d;
+            }
+            if (isNaN(s) || !user) {
+                alert("Please enter a valid score!");
+                return;
+            }
+            try {
+                await addDoc(collection(db, "kihivas_99darts"), { uid: user.uid, date: d, score: s, avg: (s/33).toFixed(2), ts: serverTimestamp() });
+                document.getElementById('score99').value = ""; 
+                addQuestProgress('play_99', 1);
+                load99();
+            } catch (e) {
+                console.error("Hiba a mentéskor:", e);
+                alert("Could not save data. Check connection.");
+            }
+        };
+        let shData = [];
+        async function loadShanghai() {
+            const g = document.getElementById('sh-grid');
+            g.innerHTML = "Syncing...";
+            const uDoc = await getDoc(doc(db, "user_meta", user.uid));
+            shData = (uDoc.exists() && uDoc.data().sh) ? uDoc.data().sh : [];
+            let html = "";
+            for (let i = 1; i <= 20; i++) {
+                const ok = shData.includes(i);
+                html += `<button class="btn-sh ${ok ? 'completed' : ''}" onclick="toggleSh(${i}, this)">${i}</button>`;
+            }
+            g.innerHTML = html;
+        }
+        window.toggleSh = async (n, b) => {
+            if(!user) return;
+            if (b.classList.contains('completed')) { 
+                b.classList.remove('completed');
+                shData = shData.filter(x => x !== n); 
+                addXP(-5);
+            } else { 
+                b.classList.add('completed');
+                shData.push(n); 
+                addXP(5);
+                addQuestProgress('shanghai_hit', 1);
+            }
+            await setDoc(doc(db, "user_meta", user.uid), { sh: shData }, { merge: true });
+        };
+        const nGrid = document.getElementById('num-grid');
+        for (let i = 1; i <= 20; i++) {
+            const b = document.createElement('button');
+            b.className = 'btn-n'; b.innerText = i; b.onclick = () => recordNum(i); nGrid.appendChild(b);
+        }
+        newGame();
+    </script>
+</body>
+</html>
